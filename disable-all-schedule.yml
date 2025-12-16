@@ -6,7 +6,7 @@
     controller_host: "{{ lookup('env', 'CONTROLLER_HOST') }}"
     controller_username: "{{ lookup('env', 'CONTROLLER_USERNAME') }}"
     controller_password: "{{ lookup('env', 'CONTROLLER_PASSWORD') }}"
-    controller_validate_certs: "{{ lookup('env', 'CONTROLLER_PASSWORDCONTROLLER_VERIFY_SSL') }}"
+    controller_validate_certs: "{{ lookup('env', 'CONTROLLER_PASSWORDCONTROLLER_VERIFY_SSL') | bool | default(false) }}"
   tasks:
     - name: Gather all schedules using AAP 2.5+ API
       ansible.builtin.uri:
