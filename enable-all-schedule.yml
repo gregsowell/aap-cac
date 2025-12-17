@@ -1,0 +1,51 @@
+---
+- name: Playbook to gather all AAP 2.5 and above schedules and enable them
+  hosts: localhost
+  gather_facts: false
+  vars:
+    controller_host: "{{ lookup('env', 'CONTROLLER_HOST') }}"
+    controller_username: "{{ lookup('env', 'CONTROLLER_USERNAME') }}"
+    controller_password: "{{ lookup('env', 'CONTROLLER_PASSWORD') }}"
+    controller_validate_certs: "{{ lookup('env', 'CONTROLLER_PASSWORDCONTROLLER_VERIFY_SSL') | bool | default(false) }}"
+  tasks:
+    - name: Gather all schedules using AAP 2.5+ API
+      ansible.builtin.uri:
+        url: "https://{{ controller_host }}/api/controller/v2/schedules/"
+        method: GET
+        user: "{{ controller_username }}"
+        password: "{{ controller_password }}"
+        force_basic_auth: true
+        validate_certs: "{{ controller_validate_certs }}"
+        status_code: 200
+      register: schedules_response
+
+    - name: Display all schedules
+      ansible.builtin.debug:
+        msg: "Found {{ schedules_response.json.count }} schedules"
+
+    - name: Display schedule details
+      ansible.builtin.debug:
+        var: schedules_response.json.results
+    
+    - name: Create a list of IDs that aren't already enabled
+      ansible.builtin.set_fact:
+        schedules_to_enable: "{{ schedules_response.json.results | selectattr('enabled', 'equalto', false) | map(attribute='id') | list }}"
+
+    - name: Display schedules to enable
+      ansible.builtin.debug:
+        var: schedules_to_enable
+
+    - name: Enable each schedule
+      when: schedules_to_enable | length > 0
+      ansible.builtin.uri:
+        url: "https://{{ controller_host }}/api/controller/v2/schedules/{{ item }}/"
+        method: PATCH
+        user: "{{ controller_username }}"
+        password: "{{ controller_password }}"
+        body:
+          enabled: true
+        body_format: json
+        force_basic_auth: true
+        validate_certs: "{{ controller_validate_certs }}"
+        status_code: 200
+      loop: "{{ schedules_to_enable }}"
