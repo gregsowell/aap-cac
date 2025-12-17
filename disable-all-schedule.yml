@@ -34,3 +34,16 @@
     - name: Display schedules to disable
       ansible.builtin.debug:
         var: schedules_to_disable
+
+    - name: Disable each schedule
+      ansible.builtin.uri:
+        url: "https://{{ controller_host }}/api/controller/v2/schedules/{{ item }}/"
+        method: PATCH
+        user: "{{ controller_username }}"
+        password: "{{ controller_password }}"
+        body:
+          enabled: false
+        body_format: json
+        force_basic_auth: true
+        validate_certs: "{{ controller_validate_certs }}"
+        status_code: 200
