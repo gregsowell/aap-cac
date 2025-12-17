@@ -27,3 +27,10 @@
       ansible.builtin.debug:
         var: schedules_response.json.results
     
+    - name: Create a list of IDs that aren't already disabled
+      ansible.builtin.set_fact:
+        schedules_to_disable: "{{ schedules_response.json.results | selectattr('enabled', 'equalto', true) | map(attribute='id') | list }}"
+
+    - name: Display schedules to disable
+      ansible.builtin.debug:
+        var: schedules_to_disable
