@@ -36,6 +36,7 @@
         var: schedules_to_disable
 
     - name: Disable each schedule
+      when: schedules_to_disable | length > 0
       ansible.builtin.uri:
         url: "https://{{ controller_host }}/api/controller/v2/schedules/{{ item }}/"
         method: PATCH
@@ -47,3 +48,5 @@
         force_basic_auth: true
         validate_certs: "{{ controller_validate_certs }}"
         status_code: 200
+      loop: "{{ schedules_to_disable }}"
+      
